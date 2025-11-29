@@ -1,2 +1,3 @@
-# vape-configs
-Configs made for Roblox Bedwars Vape V4 and Vape copies like Voidware, Catvape, and Velocity
+# Information
+
+All these configs are for legit cheating and semi raging so don't make an issue and ask for blatant configs because if you do then fuck you.
