@@ -1,20 +1,23 @@
+Abaddon
 Aery
 Agni
 Alchemist
-All Classes
-All
+Arachne
 Archer
+Ares
 Axolotl Amy
 Baker
-Barbarian
 Beekeeper Beatrix
+Bekzat
+Barbarian
 Bounty Hunter
 Builder
 Caitlyn
+Cobalt
 Cogsworth
 Conqueror
-Cobalt
 Crypt
+Cyber
 Death Adder
 Dino Tamer Dom
 Drill
@@ -26,62 +29,77 @@ Evelynn
 Farmer Cletus
 Fisherman
 Flora
+Fortuna
 Freiya
 Frosty
 Gingerbread Man
 Gompy
 Grim Reaper
 Grove
-Hephaestus
 Hannah
-Isabel
+Hephaestus
 Ignis
+Isabel
 Jack
 Jade
-Kaliyah
 Kaida
+Kaliyah
+Krystal
 Lani
 Lassy
 Lian
 Lucia
 Lumen
 Lyla
-Martin
 Marcel
 Marina
 Marrow
+Martin
 Melody
 Merchant Marco
+Metal Detector
+Milo
 Miner
-Nahla
+Nalha
 Nazar
 Noelle
-Nyka
+None
+Nyoka
 Nyx
+Pirate Davey
 Pyro
 Ragnar
 Ramil
 Raven
+Santa
+Sheep Herder
+Shelia
+Sigrid
+Silas
 Skoll
-Smoke
 Sophia
+Spirit Catcher
+Star Collector Stella
 Styx
-Trapper
-Trixie
 Taliyah
 Terra
+Trapper
+Trinity
 Triton
-Umbra
+Trixie
 Uma
+Umbra
 Umeko
 Vanessa
 Void Knight
 Void Regent
-Warrior
-Warden
-Whisper
+Vulcan
 Whim
+Whisper
+Wren
 Yamini
 Yeti
 Yuzi
 Zephyr
+Zenith
+Zeno (Wizard)
