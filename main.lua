@@ -1,3 +1,5 @@
+-- I used gpt just to actually check everything and its putting all these warnings marked as [SPOOF], if you don't care about them then leave it but if you care about them for some reason, then remove the warnings.
+
 getgenv().Config = {
 	vic   = 5591992,        -- UserId to fetch avatar/username
 	help  = "",              -- Player being spoofed (leave empty for LocalPlayer)
