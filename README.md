@@ -22,4 +22,4 @@ Join zxros server: discord.gg/rivalscomp
 6: Clan tag (creates the clantag attribute if helper account isnt in a clan)
 
 If you need the AssetIds for all the current kits right now then check kits-table.json
-If you want to change what kit you want to spoof then goto Avaliable and copy the exact name of the script (only if you don't trust yourself with typing manually)
+If you want to change what kit you want to spoof then goto Avaliable and copy the exact name of the kit (only if you don't trust yourself with typing manually)
