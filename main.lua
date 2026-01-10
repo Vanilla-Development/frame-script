@@ -1,11 +1,11 @@
--- I used gpt just to actually check everything and its putting all these warnings marked as [SPOOF], if you don't care about them then leave it but if you care about them for some reason, then remove the warnings.
+-- I used grok just to actually check everything and its putting all these warnings marked as [SPOOF], if you don't care about them then leave it but if you care about them for some reason, then remove the warnings.
 
 getgenv().Config = {
-	vic   = 5591992,        -- UserId to fetch avatar/username
-	help  = "",              -- Player being spoofed (leave empty for LocalPlayer)
-	level = 98,             -- PlayerLevel override
-	clan  = "gg",           -- ClanTag override
-	kit   = "Caitlyn"         -- Kit override
+	vic   = 954058593,        -- UserId to fetch avatar/username
+	help  = "dmalibrarys",              -- Player being spoofed (DONT LEAVE EMPTY FOR LOCALPLAYER, PASTE YOUR OWN USERNAME OR ITS GLOBAL CHANGES.)
+	level = 128,             -- PlayerLevel override
+	clan  = "WeOAK",           -- ClanTag override
+	kit   = "Lassy"         -- Kit override
 }
 
 local Players     = game:GetService("Players")
@@ -121,22 +121,43 @@ TargetPlayer.AttributeChanged:Connect(function(attr)
 	end
 end)
 
-local function applyNametag(character)
-	local head = character:WaitForChild("Head",5)
+-- Persistent nametag spoof - survives zoom/first-person
+local function spoofNametag()
+	local head = TargetPlayer.Character:FindFirstChild("Head")
 	if not head then return end
-	local tag = head:FindFirstChild("Nametag",true)
-	if not tag then return end
-	local label = tag:FindFirstChild("DisplayName",true)
-	if label and label:IsA("TextLabel") then
-		label.Text = fetchedDisplayName
-		label:GetPropertyChangedSignal("Text"):Connect(function()
-			if label.Text ~= fetchedDisplayName then label.Text = fetchedDisplayName end
-		end)
-	end
+	
+	local nametag = head:FindFirstChild("Nametag", true)
+	if not nametag then return end
+	
+	local label = nametag:FindFirstChild("DisplayName", true)
+	if not label or not label:IsA("TextLabel") then return end
+	
+	label.Text = fetchedDisplayName
+	
+	local conn = label:GetPropertyChangedSignal("Text"):Connect(function()
+		if label.Text ~= fetchedDisplayName then
+			label.Text = fetchedDisplayName
+		end
+	end)
+	
+	label.AncestryChanged:Connect(function()
+		task.wait(0.1)
+		spoofNametag()
+	end)
 end
 
-if TargetPlayer.Character then applyNametag(TargetPlayer.Character) end
-TargetPlayer.CharacterAdded:Connect(applyNametag)
+RunService.Heartbeat:Connect(spoofNametag)
+
+local function onCharacterAdded(char)
+	task.wait(0.5)
+	spoofNametag()
+end
+
+if TargetPlayer.Character then onCharacterAdded(TargetPlayer.Character) end
+TargetPlayer.CharacterAdded:Connect(onCharacterAdded)
+
+if TargetPlayer.Character then spoofNametag(TargetPlayer.Character) end
+TargetPlayer.CharacterAdded:Connect(spoofNametag)
 
 local function hookEscapeMenu()
 	local ok, playersFrame = pcall(function()
@@ -162,16 +183,60 @@ end)
 
 task.spawn(function()
 	while true do
-		for _, inst in ipairs(LocalPlayer:GetDescendants()) do
-			if inst.Name=="HostPanelPlayerRow" then
-				for _, child in ipairs(inst:GetDescendants()) do
-					if child:IsA("ImageLabel") and typeof(child.Image)=="string" and child.Image:find("rbxthumb://type=AvatarHeadShot") then
-						lockImage(child,getHostPanelImage())
+		local gui = LocalPlayer:FindFirstChild("PlayerGui")
+		if not gui then 
+			task.wait(0.5)
+			continue 
+		end
+		
+		local hostPanel = gui:FindFirstChild("CustomMatchHostPanel")
+		if not hostPanel then 
+			task.wait(0.5)
+			continue 
+		end
+		
+		-- Try to find the scrolling frame dynamically (handles nested/numbered paths)
+		local autoCanvas = nil
+		for _, desc in ipairs(hostPanel:GetDescendants()) do
+			if desc:IsA("ScrollingFrame") and desc.Name == "AutoCanvasScrollingFrame" then
+				autoCanvas = desc
+				break
+			end
+		end
+		
+		if not autoCanvas then 
+			task.wait(0.5)
+			continue 
+		end
+		
+		-- Scan every possible HostPanelPlayerRow
+		for _, row in ipairs(autoCanvas:GetChildren()) do
+			if row.Name == "HostPanelPlayerRow" or row.Name:find("PlayerRow") then
+				local isTargetRow = false
+				
+				-- Look for TextLabel with @username
+				for _, child in ipairs(row:GetDescendants()) do
+					if child:IsA("TextLabel") and child.Text:match("^@") then  -- starts with @
+						if child.Text == "@" .. fetchedUsername or child.Text:find(fetchedUsername) then
+							isTargetRow = true
+							break
+						end
+					end
+				end
+				
+				if isTargetRow then
+					-- Spoof only the avatar images in this row
+					for _, img in ipairs(row:GetDescendants()) do
+						if img:IsA("ImageLabel") and typeof(img.Image) == "string" and 
+						   (img.Image:find("AvatarHeadShot") or img.Image:find("rbxthumb://type=AvatarHeadShot")) then
+							lockImage(img, getHostPanelImage())
+						end
 					end
 				end
 			end
 		end
-		task.wait(0.25)
+		
+		task.wait(0.5)  -- Balanced polling
 	end
 end)
 
@@ -195,71 +260,53 @@ local function spoofKitImage()
 	local tabGui = gui:FindFirstChild("TabListScreenGui")
 	if not tabGui then return end
 
-  
+	-- Clear old connections
 	for _, conn in pairs(kitSpoofConnections) do
 		conn:Disconnect()
 	end
 	kitSpoofConnections = {}
-  
-	for _, pd in ipairs(tabGui:GetDescendants()) do
-		if pd:IsA("ImageLabel") and (pd.Name=="PlayerKitImage" or pd.Name=="KitImage") then
-			local conn = lockImage(pd, kitAsset)
-			if conn then
-				table.insert(kitSpoofConnections, conn)
-			end
-		end
-	end
-	
-	for _, frame in ipairs(tabGui:GetDescendants()) do
-		if frame:IsA("Frame") then
-			for _, child in ipairs(frame:GetChildren()) do
-				if child:IsA("ImageLabel") and (child.Name=="PlayerKitImage" or child.Name=="KitImage" or child.Name=="Kit") then
-					local conn = lockImage(child, kitAsset)
-					if conn then
-						table.insert(kitSpoofConnections, conn)
-					end
-				end
-			end
-		end
-	end
-	
-	log("Kit spoof applied: " .. kitName .. " -> " .. kitAsset)
-end
 
-
-RunService.DescendantAdded:Connect(function(descendant)
-	if descendant:IsA("ImageLabel") and (descendant.Name=="PlayerKitImage" or descendant.Name=="KitImage" or descendant.Name=="Kit") then
-		task.wait(0.1) -- Wait for UI to initialize
-		spoofKitImage()
-	end
-end)
-
-
-task.spawn(function()
-	while true do
-		spoofKitImage()
-		task.wait(2)
-	end
-end)
-
-task.spawn(function()
-	while true do
-		local gui = LocalPlayer:FindFirstChild("PlayerGui")
-		if gui then
-			local tabGui = gui:FindFirstChild("TabListScreenGui")
-			if tabGui then
-				for _, inst in ipairs(tabGui:GetDescendants()) do
-					if inst:IsA("Frame") and inst.Name=="PlayerDropdown" then
-						for _, child in ipairs(inst:GetDescendants()) do
-							if child:IsA("ImageLabel") and child.Name=="PlayerRender" then
-								lockImage(child,getTabListImage())
-							end
+	-- Search recursively, ignoring numbered instances
+	for _, label in ipairs(tabGui:GetDescendants()) do
+		if label:IsA("TextLabel") and (label.Text == fetchedDisplayName or label.Text:find(fetchedDisplayName)) then  -- Match spoofed name
+			local rowContainer = label:FindFirstAncestor("PlayerRowContainer")  -- Stable ancestor
+			if rowContainer then
+				-- Spoof kit image (broad name match)
+				for _, img in ipairs(rowContainer:GetDescendants()) do
+					if img:IsA("ImageLabel") and (img.Name:find("PlayerKitImage") or img.Name:find("KitImage") or img.Name:find("Kit")) then
+						local conn = lockImage(img, kitAsset)
+						if conn then
+							table.insert(kitSpoofConnections, conn)
 						end
 					end
 				end
+				
+				-- Spoof tab list avatar (broad name match)
+				for _, child in ipairs(rowContainer:GetDescendants()) do
+					if child:IsA("ImageLabel") and (child.Name:find("PlayerRender") or child.Name:find("PlayerInfo") or child.Name:find("Render")) then
+						lockImage(child, getTabListImage())
+					end
+				end
 			end
 		end
-		task.wait(0.25)
+	end
+	
+	log("Kit & tab avatar spoof applied for: " .. fetchedDisplayName)
+end
+
+-- Monitor for new UI elements (handles dynamic adds)
+RunService.DescendantAdded:Connect(function(descendant)
+	if descendant:IsA("ImageLabel") and (descendant.Name:find("KitImage") or descendant.Name:find("PlayerRender")) then
+		task.wait(0.1) -- Wait for UI init
+		spoofKitImage()
+	end
+end)
+
+-- Run periodically to catch UI reloads
+task.spawn(function()
+	while true do
+		spoofKitImage()
+		task.wait(1)  -- Faster for reactivity
 	end
 end)
 
@@ -297,6 +344,7 @@ end)
 RunService.Heartbeat:Connect(spoofKillfeed)
 
 
+-- FIXED CHARACTER SPOOF WITH INVENTORY PROTECTION
 local characterSpoofed = false
 
 local function spoofCharacter(plr, vicId)
@@ -307,29 +355,29 @@ local function spoofCharacter(plr, vicId)
 	local char = plr.Character
 	local humanoid = char.Humanoid
 	
-
+	-- Don't respoof if already done (to prevent item loss on respawn)
 	if characterSpoofed and char:GetAttribute("Spoofed") == vicId then
 		return true
 	end
 
-
-	local savedItems = {}
-	local itemParents = {}
+	-- Store ALL tools in Backpack (safe, Roblox handles re-equip)
+	local backpack = plr:FindFirstChild("Backpack")
+	if not backpack then return false end
 	
+	local savedItems = {}
 	for _, child in pairs(char:GetChildren()) do
 		if child:IsA("Tool") or child:IsA("Model") or child:IsA("BasePart") then
-			-- Only save items that aren't part of the character's base structure
+			-- Only save non-rig items
 			if not (child:IsA("BasePart") and child.Name == "HumanoidRootPart") and
 			   not (child:IsA("BasePart") and (child.Name == "Head" or child.Name == "Torso" or child.Name == "Left Arm" or 
-												child.Name == "Right Arm" or child.Name == "Left Leg" or child.Name == "Right Leg")) then
+											child.Name == "Right Arm" or child.Name == "Left Leg" or child.Name == "Right Leg")) then
 				table.insert(savedItems, child)
-				itemParents[child] = child.Parent
-				child.Parent = nil
+				child.Parent = backpack -- Safe relocation
 			end
 		end
 	end
 
-
+	-- Fetch and apply appearance
 	local success, appearance = pcall(function()
 		return Players:GetCharacterAppearanceAsync(vicId)
 	end)
@@ -337,13 +385,12 @@ local function spoofCharacter(plr, vicId)
 	if not success or not appearance then
 		warn("Appearance fetch failed, restoring items")
 		for _, item in pairs(savedItems) do
-			if item and item.Parent == nil then
-				item.Parent = char
-			end
+			item.Parent = char
 		end
 		return false
 	end
 
+	-- Remove only cosmetics, not character structure
 	for _, item in pairs(char:GetChildren()) do
 		if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or 
 		   item:IsA("ShirtGraphic") or item:IsA("BodyColors") or item:IsA("Decal") then
@@ -351,6 +398,7 @@ local function spoofCharacter(plr, vicId)
 		end
 	end
 
+	-- Apply new cosmetics
 	for _, item in pairs(appearance:GetChildren()) do
 		local itemClone = item:Clone()
 		if item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
@@ -360,6 +408,7 @@ local function spoofCharacter(plr, vicId)
 		end
 	end
 
+	-- Face handling
 	local head = char:FindFirstChild("Head")
 	if head then
 		local face = head:FindFirstChild("face")
@@ -370,15 +419,16 @@ local function spoofCharacter(plr, vicId)
 		end
 	end
 
+	-- Restore saved items (Roblox re-equips Tools)
 	for _, item in pairs(savedItems) do
-		if item and item.Parent == nil then
-			item.Parent = char
-		end
+		item.Parent = char
 	end
 
+	-- Mark as spoofed to prevent reapplication
 	char:SetAttribute("Spoofed", vicId)
 	characterSpoofed = true
 	
+	-- Rebuild rig if needed
 	pcall(function()
 		humanoid:BuildRigFromAttachments()
 	end)
@@ -390,21 +440,25 @@ end
 local function applyCharacterSpoof()
 	if not getgenv().Config.vic then return end
 	
+	-- Wait a bit for character to fully load
 	task.wait(0.5)
 	
 	local success = spoofCharacter(TargetPlayer, getgenv().Config.vic)
 	if not success then
+		-- Retry once after a delay
 		task.wait(1)
 		spoofCharacter(TargetPlayer, getgenv().Config.vic)
 	end
 end
 
+-- Handle character changes
 TargetPlayer.CharacterAdded:Connect(function(char)
-	task.wait(1)
+	task.wait(1) -- Wait for character to fully load
 	characterSpoofed = false
 	applyCharacterSpoof()
 end)
 
+-- Also apply when script starts
 if TargetPlayer.Character then
 	task.spawn(function()
 		task.wait(1)
@@ -412,6 +466,7 @@ if TargetPlayer.Character then
 	end)
 end
 
+-- Monitor for respawns
 TargetPlayer.CharacterRemoving:Connect(function()
 	characterSpoofed = false
 end)
